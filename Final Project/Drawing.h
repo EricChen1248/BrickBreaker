@@ -128,6 +128,12 @@ namespace Draw
 	}
 	void drawDigit(Vector2 position, int digit, COLORREF  digitColor = color)
 	{
+		for (int i = 1; i < 8; i++)
+			digitLine(position, i, consoleColor);
+		Vector2 positionTemp = position;
+		positionTemp.x += 4;
+		digitLine(positionTemp, 1, consoleColor);
+		digitLine(positionTemp, 2, consoleColor);
 		switch (digit)
 		{
 		case 0:
@@ -153,12 +159,54 @@ namespace Draw
 			digitLine(position, 2, digitColor);
 			digitLine(position, 5, digitColor);
 			break;
+		case 3:
+			digitLine(position, 3, digitColor);
+			digitLine(position, 4, digitColor);
+			digitLine(position, 5, digitColor);
+			digitLine(position, 6, digitColor);
+			digitLine(position, 7, digitColor);
+			break;
+		case 4:
+			digitLine(position, 1, digitColor);
+			digitLine(position, 4, digitColor);
+			digitLine(position, 6, digitColor);
+			digitLine(position, 7, digitColor);
+			break;
 		case 5:
 			digitLine(position, 3, digitColor);
 			digitLine(position, 1, digitColor);
 			digitLine(position, 4, digitColor);
 			digitLine(position, 7, digitColor);
 			digitLine(position, 5, digitColor);
+			break;
+		case 6:
+			digitLine(position, 1, digitColor);
+			digitLine(position, 2, digitColor);
+			digitLine(position, 3, digitColor);
+			digitLine(position, 4, digitColor);
+			digitLine(position, 5, digitColor);
+			digitLine(position, 7, digitColor);
+			break;
+		case 7:
+			digitLine(position, 3, digitColor);
+			digitLine(position, 6, digitColor);
+			digitLine(position, 7, digitColor);
+			break;
+		case 8:
+			digitLine(position, 1, digitColor);
+			digitLine(position, 2, digitColor);
+			digitLine(position, 3, digitColor);
+			digitLine(position, 4, digitColor);
+			digitLine(position, 5, digitColor);
+			digitLine(position, 6, digitColor);
+			digitLine(position, 7, digitColor);
+			break;
+		case 9:
+			digitLine(position, 1, digitColor);
+			digitLine(position, 3, digitColor);
+			digitLine(position, 4, digitColor);
+			digitLine(position, 6, digitColor);
+			digitLine(position, 7, digitColor);
 			break;
 		default:
 			break;

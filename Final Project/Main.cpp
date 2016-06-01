@@ -1,6 +1,8 @@
 #include <iostream>
 #include <Windows.h>
+#include <cmath>
 #include "Drawing.h"
+
 #using <mscorlib.dll>
 using namespace std;
 using namespace System;
@@ -60,7 +62,7 @@ void Paddle::reset()
 class Ball
 {
 public:
-	Ball() { speed.x = 0; speed.y = -8; radius = 6; position.y = 494; position.x = (console_width * console_pixelWidth - radius) / 2; drawBall(position, radius); hitStrength = 1; }
+	Ball() { speed.x = 0; speed.y = -20; radius = 6; position.y = 494; position.x = (console_width * console_pixelWidth - radius) / 2; drawBall(position, radius); hitStrength = 1; }
 	void move(int x = 0, int y= 0);
 	Vector2 getPosition() { return position; }
 	Vector2 getSpeed() { return speed; }
@@ -108,7 +110,7 @@ public:
 	void setX(int x) { location.x = x; }
 	void setY(int y) { location.y = y; }
 	void draw();
-	void hit(Ball ball);
+	void hit(Ball ball, int &score);
 	int getHitPoints() { return hitPoints; }
 	Vector2 getPosition() { return location; }
 
@@ -144,24 +146,27 @@ void Brick::draw()
 		break;
 	}
 }
-void Brick::hit(Ball ball)
+void Brick::hit(Ball ball, int &score)
 {
 	hitPoints -= ball.getHitStrength();
 	if (hitPoints <= 0)
 	{
 		hitPoints = 0;
+		score += 20;
 		brickCnt--;
 	}
+	score += 10;
 	draw();
 }
 
 void CollisionDetectionPaddle(Paddle paddle, Ball& ball, bool &redrawPaddle);
 void BorderCollision(Ball &ball, bool godMode, bool &death);
-void Game1(Brick Brick[5][5]);
 void LoadBricks(Brick Brick[5][5]);
 void BrickInitialize(Brick brick[5][5]);
-void BrickCollision(Ball &ball, Brick brick[5][5]);
+void BrickCollision(Ball &ball, Brick brick[5][5], int &score);
 void Death(int &lifeCnt, Vector2 lifePos[3], Ball &ball, Paddle &paddle);
+void Score(int score, Vector2 scorePosition[6]);
+void Game(int level, Brick brick[5][5]);
 
 int main(int argc, const char * argv[])
 {
@@ -173,9 +178,12 @@ int main(int argc, const char * argv[])
 	Ball ball;
 	Brick brick[5][5];
 	int lifeCount = 3;
+	int level = 1;
+	int levelScore = 0;
 	bool death = false;
 	bool redrawPaddle = false;
-	bool godMode = false;
+	bool godMode = true;
+	int score = 0, oldScore = 0;
 
 	//Interface Layout
 	Vector2 scorePosition[6];
@@ -219,39 +227,51 @@ int main(int argc, const char * argv[])
 	}
 
 	BrickInitialize(brick);
-	Game1(brick);
-	LoadBricks(brick);
-
-	while (true)
-		if (GetAsyncKeyState(VK_SPACE))
-			break;
-	while (lifeCount >= 0 && Brick::brickCnt > 0)				//End game condition
+	while (lifeCount >= 0)
 	{
-		Sleep(20);		//Game refresh interval
-		ball.move();
-		
-		if (redrawPaddle)
+		Game(level, brick);
+		LoadBricks(brick);
+
+		//Wait for user to start
+		while (true)
+			if (GetAsyncKeyState(VK_SPACE))
+				break;
+
+		while (lifeCount >= 0 && Brick::brickCnt > 0)				//End game condition
 		{
-			paddle.Redraw();
-			redrawPaddle = false;
+			Sleep(20);		//Game refresh interval
+			ball.move();
+
+			if (redrawPaddle)
+			{
+				paddle.Redraw();
+				redrawPaddle = false;
+			}
+
+			CollisionDetectionPaddle(paddle, ball, redrawPaddle);
+			BorderCollision(ball, godMode, death);
+			BrickCollision(ball, brick, score);
+			if (score != oldScore)
+			{
+				Score(score, scorePosition);
+				oldScore = score;
+			}
+			//Paddle Control
+			if (GetAsyncKeyState(VK_RIGHT))
+				paddle.move(7);
+			if (GetAsyncKeyState(VK_LEFT))
+				paddle.move(-7);
+
+			if (death)
+			{
+				Death(lifeCount, lifePos, ball, paddle);
+				death = false;
+			}
 		}
-
-		CollisionDetectionPaddle(paddle, ball, redrawPaddle);
-		BorderCollision(ball, godMode, death);
-		BrickCollision(ball, brick);
-
-		//Paddle Control
-		if (GetAsyncKeyState(VK_RIGHT))
-			paddle.move(7);
-		if (GetAsyncKeyState(VK_LEFT))
-			paddle.move(-7);
-
-		if (death)
-		{
-			Death(lifeCount, lifePos, ball, paddle);
-			death = false;
-		}
+		score += (score - levelScore) * level * lifeCount;
+		level++;
 	}
+
 	system("Pause");
 	return 0;
 }
@@ -346,57 +366,45 @@ void BorderCollision(Ball &ball, bool godMode, bool &death)
 	}
 	return;
 }
-void BrickCollision(Ball &ball, Brick brick[5][5])
+void BrickCollision(Ball &ball, Brick brick[5][5], int &score)
 {
 	bool collision = false;
 	for (int i = 0; i < 5; i++)
 		for (int j = 0; j < 5; j++)
 		{
 			//Vertical Collision
-			if ((ball.getPosition().x >= brick[i][j].getPosition().x || ball.getPosition().x + ball.getSpeed().x >= brick[i][j].getPosition().x)
-				&& (ball.getPosition().x <= brick[i][j].getPosition().x + Brick::size.x || ball.getPosition().x + ball.getSpeed().x <= brick[i][j].getPosition().x + Brick::size.x))
+			if ((ball.getPosition().x + ball.getRadius()>= brick[i][j].getPosition().x || ball.getPosition().x + ball.getSpeed().x + ball.getRadius() >= brick[i][j].getPosition().x)
+				&& (ball.getPosition().x - ball.getRadius() <= brick[i][j].getPosition().x + Brick::size.x || ball.getPosition().x + ball.getSpeed().x - ball.getRadius() <= brick[i][j].getPosition().x + Brick::size.x))
 			{
-				//Collision from top
-				if (ball.getPosition().y + ball.getRadius() <= brick[i][j].getPosition().y && ball.getPosition().y + ball.getSpeed().y  + ball.getRadius()> brick[i][j].getPosition().y)
+				//Collision from top / bottom
+				if (ball.getPosition().y + ball.getRadius() + 1 <= brick[i][j].getPosition().y && ball.getPosition().y + ball.getSpeed().y + ball.getRadius() + 1 > brick[i][j].getPosition().y 
+					|| ball.getPosition().y - ball.getRadius() + 1 >= brick[i][j].getPosition().y + Brick::size.y && ball.getPosition().y + ball.getSpeed().y - ball.getRadius() + 1 < brick[i][j].getPosition().y + Brick::size.y)
 					if (brick[i][j].getHitPoints() > 0)
 					{
-						brick[i][j].hit(ball);
-						ball.verticalRebound();
-						collision = true;
-					}
-				//Collision from bottom
-				if (ball.getPosition().y - ball.getRadius() >= brick[i][j].getPosition().y + Brick::size.y && ball.getPosition().y + ball.getSpeed().y - ball.getRadius() < brick[i][j].getPosition().y + Brick::size.y)
-					if (brick[i][j].getHitPoints() > 0)
-					{
-						brick[i][j].hit(ball);
+						brick[i][j].hit(ball, score);
 						ball.verticalRebound();
 						collision = true;
 					}
 			}
 			//Horizontal Collision
-			if ((ball.getPosition().y >= brick[i][j].getPosition().y || ball.getPosition().y + ball.getSpeed().y >= brick[i][j].getPosition().y)
-				&& (ball.getPosition().y <= brick[i][j].getPosition().y + Brick::size.y || ball.getPosition().y + ball.getSpeed().y <= brick[i][j].getPosition().y + Brick::size.y))
+			else if ((ball.getPosition().y + ball.getRadius() >= brick[i][j].getPosition().y || ball.getPosition().y + ball.getSpeed().y + ball.getRadius() >= brick[i][j].getPosition().y)
+				&& (ball.getPosition().y  - ball.getRadius() <= brick[i][j].getPosition().y + Brick::size.y || ball.getPosition().y + ball.getSpeed().y - ball.getRadius() <= brick[i][j].getPosition().y + Brick::size.y))
 			{
-				//Collision from left
-				if (ball.getPosition().x + ball.getRadius()<= brick[i][j].getPosition().x && ball.getPosition().x + ball.getSpeed().x + ball.getRadius() > brick[i][j].getPosition().x)
+				//Collision from left / right
+				if (ball.getPosition().x + ball.getRadius() + 1 <= brick[i][j].getPosition().x && ball.getPosition().x + ball.getSpeed().x + ball.getRadius() + 1 > brick[i][j].getPosition().x
+					|| ball.getPosition().x - ball.getRadius() + 1 >= brick[i][j].getPosition().x + Brick::size.x && ball.getPosition().x + ball.getSpeed().x - ball.getRadius() + 1< brick[i][j].getPosition().x + Brick::size.x)
+				{
 					if (brick[i][j].getHitPoints() > 0)
 					{
-						brick[i][j].hit(ball);
+						brick[i][j].hit(ball, score);
 						ball.horizontalRebound();
 						collision = true;
 					}
-				//Collision from right
-				if (ball.getPosition().x - ball.getRadius() >= brick[i][j].getPosition().x + Brick::size.x && ball.getPosition().x + ball.getSpeed().x - ball.getRadius() < brick[i][j].getPosition().x + Brick::size.x)
-					if (brick[i][j].getHitPoints() > 0)
-					{
-						brick[i][j].hit(ball);
-						ball.horizontalRebound();
-						collision = true;
-					}
+				}
 			}
 
 			if (collision)
-				BrickCollision(ball, brick);
+				BrickCollision(ball, brick, score);
 		}
 }
 
@@ -411,4 +419,34 @@ void Death(int &lifeCnt, Vector2 lifePos[3], Ball &ball, Paddle &paddle)
 		if (GetAsyncKeyState(VK_SPACE))
 			break;
 	return;
+}
+
+void Score(int score, Vector2 scorePosition[6])
+{
+	int digit;
+	for (int i = 0; i < 6; i++)
+	{
+		digit = score % 10;
+		drawDigit(scorePosition[5 - i], digit);
+		score /= 10;
+	}
+}
+
+void Game(int level, Brick brick[5][5])
+{
+	switch (level)
+	{
+	case 1:
+		Game1(brick);
+	case 2:
+		Game1(brick);
+	case 3:
+		Game1(brick);
+	case 4:
+		Game1(brick);
+	case 5:
+		Game1(brick);
+	default:
+		break;
+	}
 }
