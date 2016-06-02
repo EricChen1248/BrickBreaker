@@ -2,13 +2,24 @@
 #include <iostream>
 #include <Windows.h>
 
+struct Vector2D
+{
+	double x;
+	double y;
+	Vector2D operator+(Vector2D v) { x += v.x; y += v.y; return{ x,y }; }
+	Vector2D operator=(Vector2D v) { x = v.x; y = v.y; return{ v.x, v.y }; }
+};
+
 struct Vector2
 {
 	int x;
 	int y;
-	Vector2 operator+(Vector2 v) { x += v.x; y += v.y; return{ x,y }; }
-	Vector2 operator=(Vector2 v) { x = v.x; y = v.y; return{ v.x, v.y }; }
-};
+	Vector2 operator+(Vector2 v) { x += static_cast<int>(v.x); y += static_cast<int>(v.y); return{ x,y }; }
+	Vector2 operator+(Vector2D v) { x += static_cast<int>(v.x); y += static_cast<int>(v.y); return{ x,y }; }
+	Vector2 operator=(Vector2 v) { x = static_cast<int>(v.x); y = static_cast<int>(v.y); return{ x, y }; }
+	Vector2 operator=(Vector2D v) { x = static_cast<int>(v.x); y = static_cast<int>(v.y); return{ x, y }; }
+
+}; 
 
 #define PI 3.14159265358979323
 

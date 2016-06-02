@@ -62,28 +62,37 @@ void Paddle::reset()
 class Ball
 {
 public:
-	Ball() { speed.x = 0; speed.y = -20; radius = 6; position.y = 494; position.x = (console_width * console_pixelWidth - radius) / 2; drawBall(position, radius); hitStrength = 1; }
+	Ball() { shift = 2;  speed.x = 0; speed.y = -8; radius = 6; position.y = 494; position.x = (console_width * console_pixelWidth - radius) / 2; drawBall(position, radius); hitStrength = 1; }
 	void move(int x = 0, int y= 0);
 	Vector2 getPosition() { return position; }
-	Vector2 getSpeed() { return speed; }
+	Vector2 getSpeed() { Vector2 Speed; Speed.x = static_cast<int>(speed.x);  Speed.y = static_cast<int>(speed.y); return Speed; }
 	int getRadius() { return radius; }
 	int getHitStrength() { return hitStrength; }
 	void verticalRebound() { speed.y = -speed.y;  }
 	void horizontalRebound() { speed.x = -speed.x; }
-	void shiftLeft() { speed.x -= 2; }
-	void shiftRight() { speed.x += 2; }
+	void shiftLeft() { speed.x -= shift; }
+	void shiftRight() { speed.x += shift; }
+	void get_speeddown() { speed.x = speed.x * 0.75; speed.y = speed.y * 0.75; shift = shift * 0.75; }
+	void speeddown_end() { speed.x = speed.x / 0.75; speed.y = speed.y / 0.75; shift = shift / 0.75; }
+	void get_bigball() { radius = 12; }
+	void bigball_end() { radius = 6; }
+	void hit() { speed.x = speed.x * 1.05; speed.y = speed.y * 1.05; shift = shift * 1.05; }
 	void reset();
 private:
 	int radius;
 	int hitStrength;
 	Vector2 position;
-	Vector2 speed;
+	Vector2D speed;
+	double shift;
 };
 void Ball::move(int x, int y)
 {
 	clearBall(position, radius);
 	if (x != 0 && y != 0)
-		position = { x,y };
+	{
+		position.x = x;
+		position.y = y;
+	}
 	else
 		position = position + speed;
 
@@ -93,11 +102,13 @@ void Ball::move(int x, int y)
 void Ball::reset()
 {
 	clearBall(position, radius);
-	position = { console_width * console_pixelWidth / 2, 494 };
+	position.x = console_width * console_pixelWidth / 2;
+	position.y = 494;
 	speed = { 0,-8 };
 	radius = 6;
 	hitStrength = 1;
 	drawBall(position, radius);
+	shift = 2;
 }
 
 class Brick
@@ -154,6 +165,7 @@ void Brick::hit(Ball ball, int &score)
 		hitPoints = 0;
 		score += 20;
 		brickCnt--;
+		ball.hit();
 	}
 	score += 10;
 	draw();
@@ -182,7 +194,7 @@ int main(int argc, const char * argv[])
 	int levelScore = 0;
 	bool death = false;
 	bool redrawPaddle = false;
-	bool godMode = true;
+	bool godMode = false;
 	int score = 0, oldScore = 0;
 
 	//Interface Layout
@@ -229,6 +241,8 @@ int main(int argc, const char * argv[])
 	BrickInitialize(brick);
 	while (lifeCount >= 0)
 	{
+		paddle.reset();
+		ball.reset();
 		Game(level, brick);
 		LoadBricks(brick);
 
@@ -268,7 +282,8 @@ int main(int argc, const char * argv[])
 				death = false;
 			}
 		}
-		score += (score - levelScore) * level * lifeCount;
+		score += (score - levelScore) * level * (lifeCount+1);
+		Score(score,scorePosition);
 		level++;
 	}
 
@@ -423,12 +438,17 @@ void Death(int &lifeCnt, Vector2 lifePos[3], Ball &ball, Paddle &paddle)
 
 void Score(int score, Vector2 scorePosition[6])
 {
+	static int digits[6] = { 0 };
 	int digit;
 	for (int i = 0; i < 6; i++)
 	{
 		digit = score % 10;
-		drawDigit(scorePosition[5 - i], digit);
-		score /= 10;
+		if (digits[5 - i] != digit)
+		{
+			digits[5 - i] = digit;
+			drawDigit(scorePosition[5 - i], digit);
+		}
+			score /= 10;
 	}
 }
 
