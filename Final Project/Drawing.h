@@ -44,6 +44,7 @@ namespace Draw
 	COLORREF red = RGB(255, 0, 0);
 	COLORREF green = RGB(20, 200, 80);
 	COLORREF purple = RGB(150, 50, 150);
+	COLORREF yellow = RGB(255, 255, 20);
 	void drawBorder()
 	{
 		for (int i = leftBorder; i < rightBorder; i++)
@@ -71,7 +72,7 @@ namespace Draw
 	{
 		//for (unsigned int j = 0; j < radius; j++)
 		for (unsigned int i = 0; i < 360; i++)
-			SetPixel(device, position.x + static_cast<int>(lengthdir_x(radius, i)), position.y + static_cast<int>(lengthdir_y(radius, i)), color);
+			SetPixel(device, position.x + static_cast<int>(lengthdir_x(radius, i)), position.y + static_cast<int>(lengthdir_y(radius, i)), ballcolor);
 		return;
 	}
 
