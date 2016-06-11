@@ -9,6 +9,7 @@
 using namespace std;
 using namespace System;
 using namespace Draw;
+using namespace Objects;
 
 void CollisionDetectionPaddle(Paddle paddle, Ball& ball, bool &redrawPaddle);
 void BorderCollision(Ball &ball, bool godMode, bool &death);
@@ -68,16 +69,16 @@ int main(int argc, const char * argv[])
 		drawDigit(scorePosition[i], 0);
 	}
 	{
-	drawLetter(sLetterPosition[0], 'S');
-	drawLetter(sLetterPosition[1], 'C');
-	drawLetter(sLetterPosition[2], 'O');
-	drawLetter(sLetterPosition[3], 'R');
-	drawLetter(sLetterPosition[4], 'E');
+	drawLetter(sLetterPosition[0], 'S', red);
+	drawLetter(sLetterPosition[1], 'C', green);
+	drawLetter(sLetterPosition[2], 'O', blue);
+	drawLetter(sLetterPosition[3], 'R', purple);
+	drawLetter(sLetterPosition[4], 'E', yellow);
 	drawLetter(sLetterPosition[5], ':');
-	drawLetter(lLetterPosition[0], 'L');
-	drawLetter(lLetterPosition[1], 'I');
-	drawLetter(lLetterPosition[2], 'F');
-	drawLetter(lLetterPosition[3], 'E');
+	drawLetter(lLetterPosition[0], 'L',red);
+	drawLetter(lLetterPosition[1], 'I',green);
+	drawLetter(lLetterPosition[2], 'F',blue);
+	drawLetter(lLetterPosition[3], 'E',purple);
 	drawLetter(lLetterPosition[4], ':');
 	}
 
@@ -89,6 +90,8 @@ int main(int argc, const char * argv[])
 		ball.reset();
 		Game(level, brick);
 		LoadBricks(brick);
+
+		//drawHeart();
 
 		//Wait for user to start
 		while (true)
@@ -245,12 +248,12 @@ void BrickCollision(Ball &ball, Brick brick[5][5], int &score, PowerUp **list)
 		for (int j = 0; j < 5; j++)
 		{
 			//Vertical Collision
-			if ((ball.getPosition().x + ball.getRadius()>= brick[i][j].getPosition().x || ball.getPosition().x + ball.getSpeed().x + ball.getRadius() >= brick[i][j].getPosition().x)
-				&& (ball.getPosition().x - ball.getRadius() <= brick[i][j].getPosition().x + Brick::size.x || ball.getPosition().x + ball.getSpeed().x - ball.getRadius() <= brick[i][j].getPosition().x + Brick::size.x))
+			if ((ball.getPosition().x + ball.getRadius() + 1>= brick[i][j].getPosition().x || ball.getPosition().x + ball.getSpeed().x + ball.getRadius() + 1>= brick[i][j].getPosition().x)
+				&& (ball.getPosition().x - ball.getRadius()  - 1 <= brick[i][j].getPosition().x + Brick::size.x || ball.getPosition().x + ball.getSpeed().x - ball.getRadius() - 1 <= brick[i][j].getPosition().x + Brick::size.x))
 			{
 				//Collision from top / bottom
-				if (ball.getPosition().y + ball.getRadius() + 1 <= brick[i][j].getPosition().y && ball.getPosition().y + ball.getSpeed().y + ball.getRadius() + 1 > brick[i][j].getPosition().y 
-					|| ball.getPosition().y - ball.getRadius() + 1 >= brick[i][j].getPosition().y + Brick::size.y && ball.getPosition().y + ball.getSpeed().y - ball.getRadius() + 1 < brick[i][j].getPosition().y + Brick::size.y)
+				if (ball.getPosition().y + ball.getRadius() - 1 <= brick[i][j].getPosition().y && ball.getPosition().y + ball.getSpeed().y + ball.getRadius() + 1 > brick[i][j].getPosition().y 
+					|| ball.getPosition().y - ball.getRadius() +1 >= brick[i][j].getPosition().y + Brick::size.y && ball.getPosition().y + ball.getSpeed().y - ball.getRadius() - 1 < brick[i][j].getPosition().y + Brick::size.y)
 					if (brick[i][j].getHitPoints() > 0)
 					{
 						brick[i][j].hit(ball, score, list);
@@ -259,12 +262,12 @@ void BrickCollision(Ball &ball, Brick brick[5][5], int &score, PowerUp **list)
 					}
 			}
 			//Horizontal Collision
-			else if ((ball.getPosition().y + ball.getRadius() >= brick[i][j].getPosition().y || ball.getPosition().y + ball.getSpeed().y + ball.getRadius() >= brick[i][j].getPosition().y)
-				&& (ball.getPosition().y  - ball.getRadius() <= brick[i][j].getPosition().y + Brick::size.y || ball.getPosition().y + ball.getSpeed().y - ball.getRadius() <= brick[i][j].getPosition().y + Brick::size.y))
+			else if ((ball.getPosition().y + ball.getRadius()  + 1>= brick[i][j].getPosition().y || ball.getPosition().y + ball.getSpeed().y + ball.getRadius() + 1>= brick[i][j].getPosition().y)
+				&& (ball.getPosition().y  - ball.getRadius()  - 1<= brick[i][j].getPosition().y + Brick::size.y || ball.getPosition().y + ball.getSpeed().y - ball.getRadius() - 1 <= brick[i][j].getPosition().y + Brick::size.y))
 			{
 				//Collision from left / right
-				if (ball.getPosition().x + ball.getRadius() + 1 <= brick[i][j].getPosition().x && ball.getPosition().x + ball.getSpeed().x + ball.getRadius() + 1 > brick[i][j].getPosition().x
-					|| ball.getPosition().x - ball.getRadius() + 1 >= brick[i][j].getPosition().x + Brick::size.x && ball.getPosition().x + ball.getSpeed().x - ball.getRadius() + 1< brick[i][j].getPosition().x + Brick::size.x)
+				if (ball.getPosition().x + ball.getRadius() - 1 <= brick[i][j].getPosition().x && ball.getPosition().x + ball.getSpeed().x + ball.getRadius() + 1 > brick[i][j].getPosition().x
+					|| ball.getPosition().x - ball.getRadius() + 1 >= brick[i][j].getPosition().x + Brick::size.x && ball.getPosition().x + ball.getSpeed().x - ball.getRadius() - 1< brick[i][j].getPosition().x + Brick::size.x)
 				{
 					if (brick[i][j].getHitPoints() > 0)
 					{
@@ -278,8 +281,8 @@ void BrickCollision(Ball &ball, Brick brick[5][5], int &score, PowerUp **list)
 			for (int k = 0; k < 10; k++)
 				if (list[k] != nullptr)
 					if (brick[i][j].getHitPoints() > 0)
-						if (list[k]->getLocation().y >= brick[i][j].getPosition().y - 2 && list[k]->getLocation().y <= brick[i][j].getPosition().y + Brick::size.y + 2)
-							if (list[k]->getLocation().x >= brick[i][j].getPosition().x - 2 && list[k]->getLocation().x <= brick[i][j].getPosition().x + Brick::size.x + 2)
+						if (list[k]->getLocation().y >= brick[i][j].getPosition().y  && list[k]->getLocation().y <= brick[i][j].getPosition().y + Brick::size.y)
+							if (list[k]->getLocation().x >= brick[i][j].getPosition().x  && list[k]->getLocation().x <= brick[i][j].getPosition().x + Brick::size.x)
 								brick[i][j].draw();
 
 			if (collision)

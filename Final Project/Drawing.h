@@ -44,7 +44,7 @@ namespace Draw
 	COLORREF red = RGB(255, 0, 0);
 	COLORREF green = RGB(20, 200, 80);
 	COLORREF purple = RGB(150, 50, 150);
-	COLORREF yellow = RGB(255, 255, 20);
+	COLORREF yellow = RGB(150, 150, 20);
 	void drawBorder()
 	{
 		for (int i = leftBorder; i < rightBorder; i++)
@@ -103,36 +103,45 @@ namespace Draw
 		switch (location)
 		{
 		case 1:
-			for (int i = 0; i < 8; i++)
-				SetPixel(device, position.x, position.y + i, color);
+			for (int i = 0; i < 9; i++)
+				for (int j = 0; j < 2; j++)
+				SetPixel(device, position.x + j, position.y + i, color);
 			break;
 		case 2:
-			for (int i = 0; i < 8; i++)
-				SetPixel(device, position.x, position.y + i + 8, color);
+			for (int i = 0; i < 9; i++)
+				for (int j = 0; j < 2; j++)
+				SetPixel(device, position.x + j, position.y + i + 8, color);
 			break;
 		case 3:
-			for (int i = 0; i < 8; i++)
-				SetPixel(device, position.x + i, position.y, color);
+			for (int i = 0; i < 9; i++)
+				for (int j = 0; j < 2; j++)
+				SetPixel(device, position.x + i, position.y + j, color);
 			break;
 		case 4:
-			for (int i = 0; i < 8; i++)
-				SetPixel(device, position.x + i, position.y + 8, color);
+			for (int i = 0; i < 9; i++)
+				for (int j = 0; j < 2; j++)
+				SetPixel(device, position.x + i, position.y + 8 +j, color);
 			break;
 		case 5:
-			for (int i = 0; i < 8; i++)
-				SetPixel(device, position.x + i, position.y + 16, color);
+			for (int i = 0; i < 9; i++)
+				for (int j = 0; j < 2; j++)
+				SetPixel(device, position.x + i, position.y + 16 + j, color);
 			break;
 		case 6:
-			for (int i = 0; i < 8; i++)
-				SetPixel(device, position.x + 8, position.y + i, color);
+			for (int i = 0; i < 9; i++)
+				for (int j = 0; j < 2; j++)
+				SetPixel(device, position.x + 8 + j, position.y + i, color);
 			break;
 		case 7:
-			for (int i = 0; i < 8; i++)
-				SetPixel(device, position.x + 8, position.y + i + 8, color);
+			for (int i = 0; i < 9; i++)
+				for (int j = 0; j < 2; j++)
+				SetPixel(device, position.x + 8 + j, position.y + i + 8, color);
 			break;
 		case 8:
-			for (int i = 0; i < 8; i++)
-				SetPixel(device, position.x + i, position.y + 8 + i, color);
+			for (int i = 0; i < 9; i++)
+				for (int j = 0; j < 2; j++)
+					for (int k = 0; k < 2; k++)
+				SetPixel(device, position.x + i + j, position.y + 8 + i + k, color);
 			break;
 		default:
 			break;
@@ -279,5 +288,13 @@ namespace Draw
 		default:
 			break;
 		}
+	}
+
+	void drawHeart()
+	{
+		for (double i = 0; i < 720; i++)
+			for (int j = 0; j < 3; j++)
+				for (int k = 0; k < 3; k++)
+					SetPixel(device, 190 + 64 * pow(sin(i*PI / 360), 3) + j, 250 + 55 * cos(i * PI / 360) + 20 * cos(i * PI / 180) - 8 * cos(i * PI / 120) - 4 * cos(i * PI / 90) + k, red);
 	}
 }
