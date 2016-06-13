@@ -118,12 +118,14 @@ namespace Objects
 	class Ball
 	{
 	public:
-		Ball() { shift = 2;  speed.x = 0; speed.y = -8; radius = 6; position.y = 493; position.x = (console_width * console_pixelWidth - radius) / 2; drawBall(position, radius); hitStrength = 1; }
+		Ball() { shift = 2;  speed.x = 0; speed.y = -10; radius = 6; position.y = 493; position.x = (console_width * console_pixelWidth - radius) / 2; drawBall(position, radius); hitStrength = 1; }
 		void move(int x = 0, int y = 0);
 		Vector2 getPosition() { return position; }
 		Vector2 getSpeed() { Vector2 Speed; Speed.x = static_cast<int>(speed.x);  Speed.y = static_cast<int>(speed.y); return Speed; }
 		int getRadius() { return radius; }
 		int getHitStrength() { return hitStrength; }
+		void godMode() { speed.y *= 4; speed.x *= 4; }
+		void endGod() { speed.y /= 4; speed.x /= 4; }
 		void verticalRebound() { speed.y = -speed.y; }
 		void horizontalRebound() { speed.x = -speed.x; }
 		void shiftLeft() { speed.x -= shift; }
@@ -172,9 +174,10 @@ namespace Objects
 	public:
 		static Vector2 size;
 		static int brickCnt;
-		Brick() { size.x = 54; size.y = 16; }
+		Brick() { size.x = 54; size.y = 16; hitPoints = 0; }
 		void setHitPoints(int hits) { hitPoints = hits; }
 		void setX(int x) { location.x = x; }
+		void moveX(int x) { location.x += x; }
 		void setY(int y) { location.y = y; }
 		void draw();
 		void hit(Ball ball, int &score, PowerUp **list);
@@ -194,7 +197,7 @@ namespace Objects
 			clearBrick(location, size);
 			break;
 		case 1:
-			drawBrick(location, size);
+			drawBrick(location, size, gray);
 			break;
 		case 2:
 			drawBrick(location, size, blue);
@@ -208,33 +211,40 @@ namespace Objects
 		case 5:
 			drawBrick(location, size, purple);
 			break;
+		case 6:
+			drawBrick(location, size);
+			break;
 		default:
 			break;
 		}
 	}
 	void Brick::hit(Ball ball, int &score, PowerUp **list)
 	{
-		hitPoints -= ball.getHitStrength();
-		if (hitPoints <= 0)
+		if (hitPoints < 6)
 		{
-			hitPoints = 0;
-			score += 2;
-			brickCnt--;
-			ball.hit();
-			int x = rand() % 5;
-			if (x == 1)
+			hitPoints -= ball.getHitStrength();
+			if (hitPoints <= 0)
 			{
-				PowerUp *p = new PowerUp(location);
-				p->setPointer(p);
-				for (int i = 0; i < 10; i++)
-					if (list[i] == nullptr)
-					{
-						list[i] = p;
-						break;
-					}
+				hitPoints = 0;
+				score += 2;
+				brickCnt--;
+				ball.hit();
+				int x = rand() % 5;
+				if (x == 1)
+				{
+					PowerUp *p = new PowerUp(location);
+					p->setPointer(p);
+					for (int i = 0; i < 10; i++)
+						if (list[i] == nullptr)
+						{
+							list[i] = p;
+							break;
+						}
+				}
 			}
+			score += 1;
+			draw();
 		}
-		score += 1;
-		draw();
 	}
+
 }

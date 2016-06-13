@@ -45,6 +45,7 @@ namespace Draw
 	COLORREF green = RGB(20, 200, 80);
 	COLORREF purple = RGB(150, 50, 150);
 	COLORREF yellow = RGB(150, 150, 20);
+	COLORREF gray = RGB(150, 150, 150);
 	void drawBorder()
 	{
 		for (int i = leftBorder; i < rightBorder; i++)
@@ -290,11 +291,13 @@ namespace Draw
 		}
 	}
 
-	void drawHeart()
+	void drawHeart(COLORREF color = red)
 	{
 		for (double i = 0; i < 720; i++)
 			for (int j = 0; j < 3; j++)
 				for (int k = 0; k < 3; k++)
-					SetPixel(device, 190 + 64 * pow(sin(i*PI / 360), 3) + j, 250 + 55 * cos(i * PI / 360) + 20 * cos(i * PI / 180) - 8 * cos(i * PI / 120) - 4 * cos(i * PI / 90) + k, red);
+					SetPixel(device, static_cast<int>(190 + 64 * pow(sin(i*PI / 360), 3) + j), 
+						static_cast<int>(250 + 55 * cos(i * PI / 360) + 20 * cos(i * PI / 180) - 8 * cos(i * PI / 120) - 4 * cos(i * PI / 90) + k), color);
 	}
+
 }
