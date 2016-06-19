@@ -15,15 +15,15 @@ using namespace Objects;
 
 void LoadBricks(Brick Brick[5][5]);																		//Initialize Level, Draws Bricks
 void BrickInitialize(Brick brick[5][5]);																	//Reset Brick Location
-void resetPowerUp(PowerUp *list[10]);																//Clears Powerup List
+void resetPowerUp(PowerUp *list[10]);																	//Clears Powerup List
 void clearBrickArea(Brick Brick[5][5]);																//Remove List Area
 
-void CollisionDetectionPaddle(Paddle paddle, Ball&, bool &redrawPaddle);				//Paddle Collision
-void BorderCollision(Ball &, bool godMode, bool &death);										//Border Collision
+void CollisionDetectionPaddle(Paddle paddle, Ball&, bool &redrawPaddle);					//Paddle Collision
+void BorderCollision(Ball &, bool godMode, bool &death);											//Border Collision
 void BrickCollision(Ball &, Brick brick[5][5], int &score, PowerUp **list);					//Brick Collision
 void powerupHit(PowerUp* list[], Paddle&, Ball&, int &lifeCnt, Vector2 lifePos[]);		//Powerup Collision
 
-void Death(int &lifeCnt, Vector2 lifePos[3], Ball&, Paddle&);									//Death Handling
+void Death(int &lifeCnt, Vector2 lifePos[3], Ball&, Paddle&, PowerUp **list);				//Death Handling
 void Score(int score, Vector2 scorePosition[7]);														//Score Update
 
 void Levels(int level, Brick brick[5][5]);																//Level Initialization
@@ -35,12 +35,11 @@ int main(int argc, const char * argv[])
 	//Console Initialization
 	HDC device = GetDC(GetConsoleWindow());
 	Console::SetWindowSize(console_width, console_height);
-	setConsole();
 	srand((int)time(NULL));
 	//End CI
 
 	bool endLevel = false;																					//Player's choice on reset
-	while (!endLevel)
+	while (true)
 	{
 		bool alphabet[26] = { false };																		//Holds Keystroke input
 
@@ -51,15 +50,6 @@ int main(int argc, const char * argv[])
 		bool heart = false;
 		int cmdTime = 0;
 		//End SPH
-
-		//Object Initialization
-		Paddle paddle;
-		Ball ball;
-		Brick brick[5][5];
-		PowerUp **powerupList = new  PowerUp*[10];
-		for (int i = 0; i < 10; i++)
-			powerupList[i] = nullptr;
-		//End OI
 
 		//Statistic Holders
 		int lifeCount = 3;
@@ -74,26 +64,16 @@ int main(int argc, const char * argv[])
 		//End GCB
 
 		//Interface Layout
+		setConsole();
+		Brick brick[5][5];
 		BrickInitialize(brick);
 		Vector2 scorePosition[7];
-		Vector2 sLetterPosition[6];
-		Vector2 lLetterPosition[6];
 		Vector2 lifePos[3];
-		for (int i = 0; i < 6; i++)
-		{
-			sLetterPosition[i].y = topBorder - 25;
-			sLetterPosition[i].x = leftBorder + i * 15 + 15;
-		}
 		for (int i = 0; i < 3; i++)
 		{
 			lifePos[i].y = topBorder - 17;
 			lifePos[i].x = leftBorder + 315 + i * 15;
 			drawBall(lifePos[i], 3);
-		}
-		for (int i = 0; i < 6; i++)
-		{
-			lLetterPosition[i].y = topBorder - 25;
-			lLetterPosition[i].x = leftBorder + i * 15 + 235;
 		}
 		for (int i = 0; i < 7; i++)
 		{
@@ -101,23 +81,19 @@ int main(int argc, const char * argv[])
 			scorePosition[i].x = leftBorder + i * 15 + 105;
 			drawDigit(scorePosition[i], 0);
 		}
-		{
-			drawLetter(sLetterPosition[0], 'S', red);
-			drawLetter(sLetterPosition[1], 'C', green);
-			drawLetter(sLetterPosition[2], 'O', blue);
-			drawLetter(sLetterPosition[3], 'R', purple);
-			drawLetter(sLetterPosition[4], 'E', yellow);
-			drawLetter(sLetterPosition[5], ':');
-			drawLetter(lLetterPosition[0], 'L', red);
-			drawLetter(lLetterPosition[1], 'I', green);
-			drawLetter(lLetterPosition[2], 'F', blue);
-			drawLetter(lLetterPosition[3], 'E', purple);
-			drawLetter(lLetterPosition[4], ':');
-		}
+
 		//End IL
 
 		while (lifeCount >= 0)
 		{
+			//Object Initialization
+			Paddle paddle;
+			Ball ball;
+			PowerUp **powerupList = new  PowerUp*[10];
+			for (int i = 0; i < 10; i++)
+				powerupList[i] = nullptr;
+			//End OI
+
 			resetPowerUp(powerupList);
 			paddle.reset();
 			ball.reset();
@@ -126,8 +102,23 @@ int main(int argc, const char * argv[])
 
 			//Wait for user to start
 			while (true)
+			{
+				if (GetAsyncKeyState(VK_RIGHT))
+				{
+					paddle.move(7);
+					ball.shiftBall(paddle.getPosition().x + paddle.getSize().x/2 + ball.getRadius()/2);
+				}
+				if (GetAsyncKeyState(VK_LEFT))
+				{
+					paddle.move(-7);
+					ball.shiftBall(paddle.getPosition().x + paddle.getSize().x / 2 + ball.getRadius()/2);
+				}
+
 				if (GetAsyncKeyState(VK_SPACE))
 					break;
+
+				Sleep(20);
+			}
 
 			while (lifeCount >= 0 && Brick::brickCnt > 0)				//End Level condition
 			{
@@ -149,7 +140,6 @@ int main(int argc, const char * argv[])
 				CollisionDetectionPaddle(paddle, ball, redrawPaddle);
 				BrickCollision(ball, brick, score, powerupList);
 				powerupHit(powerupList, paddle, ball, lifeCount, lifePos);
-				BorderCollision(ball, godMode, death);
 				//End Collision Detection
 
 				//Update Score
@@ -226,27 +216,30 @@ int main(int argc, const char * argv[])
 					for (int i = 0; i < 26; i++)
 						alphabet[i] = 0;
 				}
+
 				//Death Handling
 				if (death)
 				{
-					Death(lifeCount, lifePos, ball, paddle);
+					Death(lifeCount, lifePos, ball, paddle, powerupList);
 					death = false;
 					speed1 = false;
 					speed2 = false;
 				}
 
-
 				Sleep(20);		//Level refresh interval
 			}
+
 			//End Level, Reinitializes, Updates Score.
 			score += (score - levelScore) * level *(lifeCount + 1);
 			levelScore = score;
 			Score(score, scorePosition);
-			level++;
+			++level;
 			speed1 = false;
 			speed2 = false;
 		}
 
+		clearBrickArea(brick);
+		endGame();
 		//End Game, user decision to reset
 		while (true)
 		{
@@ -540,9 +533,9 @@ void clearBrickArea(Brick Brick[5][5])
 //Collision Functions
 void CollisionDetectionPaddle(Paddle paddle, Ball &ball, bool &redrawPaddle)
 {
-	if (ball.getPosition().y <= paddle.getPosition().y && ball.getPosition().y + ball.getSpeed().y >= paddle.getPosition().y)
-		if ((ball.getPosition().x + ball.getRadius() >= paddle.getPosition().x || ball.getPosition().x + ball.getSpeed().x + ball.getRadius()>= paddle.getPosition().x)
-			&& (ball.getPosition().x <= paddle.getPosition().x + paddle.getSize().x / 2 || ball.getPosition().x + ball.getSpeed().x <= paddle.getPosition().x + paddle.getSize().x / 2))
+	if (ball.getPosition().y - ball.getRadius() <= paddle.getPosition().y && ball.getPosition().y + ball.getSpeed().y + ball.getRadius() >= paddle.getPosition().y)
+		if ((ball.getPosition().x + ball.getRadius() >= paddle.getPosition().x || ball.getPosition().x + ball.getSpeed().x + ball.getRadius() >= paddle.getPosition().x)
+			&& ball.getPosition().x <= paddle.getPosition().x + paddle.getSize().x / 2)
 		{
 			ball.verticalRebound();
 			ball.shiftLeft();
@@ -558,18 +551,17 @@ void CollisionDetectionPaddle(Paddle paddle, Ball &ball, bool &redrawPaddle)
 }
 void BorderCollision(Ball &ball, bool godMode, bool &death)
 {
-	if (ball.getPosition().x + ball.getRadius() >= rightBorder || ball.getPosition().x - ball.getRadius() <= leftBorder)
+	if (ball.getPosition().x + ball.getRadius() + 1>= rightBorder || ball.getPosition().x - ball.getRadius()  - 1<= leftBorder)
 	{
 		ball.horizontalRebound();
 		drawBorder();
 	}
-	if ( ball.getPosition().y + ball.getSpeed().y - ball.getRadius() <= topBorder)
+	if ( ball.getPosition().y + ball.getSpeed().y - ball.getRadius() - 1 <= topBorder)
 	{
 		ball.verticalRebound();
 		drawBorder();
-		BorderCollision(ball, godMode, death);
 	}
-	if (ball.getPosition().y + ball.getSpeed().y + ball.getRadius() >= bottomBorder)
+	if (ball.getPosition().y + ball.getSpeed().y + ball.getRadius()  + 1 >= bottomBorder)
 	{
 		if (godMode)
 		{
@@ -588,12 +580,12 @@ void BrickCollision(Ball &ball, Brick brick[5][5], int &score, PowerUp **list)
 		for (int j = 0; j < 5; j++)
 		{
 			//Vertical Collision
-				if ((ball.getPosition().x + ball.getRadius() + 1 >= brick[i][j].getPosition().x || ball.getPosition().x + ball.getSpeed().x + ball.getRadius() + 1 >= brick[i][j].getPosition().x)
-					&& (ball.getPosition().x - ball.getRadius() - 1 <= brick[i][j].getPosition().x + Brick::size.x || ball.getPosition().x + ball.getSpeed().x - ball.getRadius() - 1 <= brick[i][j].getPosition().x + Brick::size.x))
+				if ((ball.getPosition().x + ball.getRadius() + 1 >= brick[i][j].getPosition().x )
+					&& (ball.getPosition().x - ball.getRadius() - 1 <= brick[i][j].getPosition().x + Brick::size.x ))
 				{
 					//Collision from top / bottom
-					if (ball.getPosition().y - ball.getRadius() - 1 <= brick[i][j].getPosition().y && ball.getPosition().y + ball.getSpeed().y + ball.getRadius() + 1 > brick[i][j].getPosition().y
-						|| ball.getPosition().y + ball.getRadius() + 1 >= brick[i][j].getPosition().y + Brick::size.y && ball.getPosition().y + ball.getSpeed().y - ball.getRadius() - 1 < brick[i][j].getPosition().y + Brick::size.y)
+					if (ball.getPosition().y - ball.getRadius() - 1 <= brick[i][j].getPosition().y && ball.getPosition().y + ball.getSpeed().y + ball.getRadius() + 1 >= brick[i][j].getPosition().y
+						|| ball.getPosition().y + ball.getRadius() + 1 >= brick[i][j].getPosition().y + Brick::size.y && ball.getPosition().y + ball.getSpeed().y - ball.getRadius() - 1 <= brick[i][j].getPosition().y + Brick::size.y)
 						if (brick[i][j].getHitPoints() > 0)
 						{
 							brick[i][j].hit(ball, score, list);
@@ -602,12 +594,12 @@ void BrickCollision(Ball &ball, Brick brick[5][5], int &score, PowerUp **list)
 						}
 				}
 				//Horizontal Collision
-				if ((ball.getPosition().y + ball.getRadius() + 1 >= brick[i][j].getPosition().y || ball.getPosition().y + ball.getSpeed().y + ball.getRadius() + 1 >= brick[i][j].getPosition().y)
-					&& (ball.getPosition().y - ball.getRadius() - 1 <= brick[i][j].getPosition().y + Brick::size.y || ball.getPosition().y + ball.getSpeed().y - ball.getRadius() - 1 <= brick[i][j].getPosition().y + Brick::size.y))
+				if ((ball.getPosition().y + ball.getRadius() + 1 >= brick[i][j].getPosition().y )
+					&& (ball.getPosition().y - ball.getRadius() - 1 <= brick[i][j].getPosition().y + Brick::size.y))
 				{
 					//Collision from left / right
-					if (ball.getPosition().x + ball.getRadius() - 1 <= brick[i][j].getPosition().x && ball.getPosition().x + ball.getSpeed().x + ball.getRadius() + 1 > brick[i][j].getPosition().x
-						|| ball.getPosition().x - ball.getRadius() + 1 >= brick[i][j].getPosition().x + Brick::size.x && ball.getPosition().x + ball.getSpeed().x - ball.getRadius() - 1< brick[i][j].getPosition().x + Brick::size.x)
+					if (ball.getPosition().x + ball.getRadius() - 1 <= brick[i][j].getPosition().x && ball.getPosition().x + ball.getSpeed().x + ball.getRadius() + 1 >= brick[i][j].getPosition().x
+						|| ball.getPosition().x - ball.getRadius() + 1 >= brick[i][j].getPosition().x + Brick::size.x && ball.getPosition().x + ball.getSpeed().x - ball.getRadius() - 1<= brick[i][j].getPosition().x + Brick::size.x)
 					{
 						if (brick[i][j].getHitPoints() > 0)
 						{
@@ -618,15 +610,16 @@ void BrickCollision(Ball &ball, Brick brick[5][5], int &score, PowerUp **list)
 					}
 				}
 
+			if (collision)
+				BrickCollision(ball, brick, score, list);
+
 			for (int k = 0; k < 10; k++)
 				if (list[k] != nullptr)
 					if (brick[i][j].getHitPoints() > 0)
-						if (list[k]->getLocation().y >= brick[i][j].getPosition().y  && list[k]->getLocation().y <= brick[i][j].getPosition().y + Brick::size.y)
-							if (list[k]->getLocation().x >= brick[i][j].getPosition().x  && list[k]->getLocation().x <= brick[i][j].getPosition().x + Brick::size.x)
+						if (list[k]->getLocation().y >= brick[i][j].getPosition().y  && list[k]->getLocation().y + 2 <= brick[i][j].getPosition().y + Brick::size.y)
+							if (list[k]->getLocation().x + 1 >= brick[i][j].getPosition().x && list[k]->getLocation().x - 1<= brick[i][j].getPosition().x + Brick::size.x)
 								brick[i][j].draw();
-
-			if (collision)
-				BrickCollision(ball, brick, score, list);
+			 
 		}
 	}
 
@@ -647,12 +640,13 @@ void powerupHit(PowerUp* list[], Paddle &paddle, Ball &ball, int &lifeCnt, Vecto
 }
 
 //Death Handling
-void Death(int &lifeCnt, Vector2 lifePos[3], Ball &ball, Paddle &paddle)
+void Death(int &lifeCnt, Vector2 lifePos[3], Ball &ball, Paddle &paddle, PowerUp **list)
 {
 	lifeCnt--;
 	clearBall(lifePos[lifeCnt], 3);
 	ball.reset();
 	paddle.reset();
+	resetPowerUp(list);
 
 	while (lifeCnt >= 0)
 		if (GetAsyncKeyState(VK_SPACE))

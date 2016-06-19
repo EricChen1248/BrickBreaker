@@ -22,6 +22,7 @@ namespace Objects
 		void killMissile() { delete missile; missile = nullptr; }
 		void moveMissile(Brick list[5][5]);
 		void reset();
+		void killPaddle() { clearBrick(position, size); }
 	private:
 		Vector2 size;
 		Vector2 position;
@@ -57,9 +58,7 @@ namespace Objects
 	{
 		clearBrick(position, size);
 		size.x = 70;
-		size.y = 5;
 		position.x = (console_width * console_pixelWidth - size.x) / 2;
-		position.y = 500;
 		drawBrick(position, size);
 	}
 
@@ -67,22 +66,30 @@ namespace Objects
 	{
 	public:
 		Ball() { shift = 2;  speed.x = 0; speed.y = -10; radius = 6; position.y = 493; position.x = (console_width * console_pixelWidth - radius) / 2; drawBall(position, radius); hitStrength = 1; }
-		void move(int x = 0, int y = 0);
+		//Get Functions
 		Vector2 getPosition() { return position; }
 		Vector2 getSpeed() { Vector2 Speed; Speed.x = static_cast<int>(speed.x);  Speed.y = static_cast<int>(speed.y); return Speed; }
 		int getRadius() { return radius; }
 		int getHitStrength() { return hitStrength; }
+		void get_speeddown() { speed.x = speed.x * 0.75; speed.y = speed.y * 0.75; shift = shift * 0.75; }
+		void get_bigball() { clearBall(position, radius);  radius = static_cast<int>(radius * 1.5); }
+		//Special Commands
 		void godMode() { speed.y *= 2; speed.x *= 2; }
 		void endGod() { speed.y /= 4; speed.x /= 4; }
+		//Movement
+		void move(int x = 0, int y = 0);
 		void verticalRebound() { speed.y = -speed.y; }
 		void horizontalRebound() { speed.x = -speed.x; move(); }
 		void shiftLeft() { speed.x -= shift; }
 		void shiftRight() { speed.x += shift; }
-		void get_speeddown() { speed.x = speed.x * 0.75; speed.y = speed.y * 0.75; shift = shift * 0.75; }
-		void get_bigball() { clearBall(position, radius);  radius = static_cast<int>(radius * 1.5); }
+		void shiftBall(int x) { clearBall(position, radius); position.x = x; drawBall(position, radius); }
+		//Powerups
 		void addStrength() { hitStrength++; }
+		//Events
 		void hit() { speed.x = speed.x * 1.05; speed.y = speed.y * 1.05; shift = shift * 1.05; }
 		void reset();
+		void kill() { clearBall(position, radius); }
+
 	private:
 		int radius;
 		int hitStrength;
@@ -279,8 +286,8 @@ namespace Objects
 				}
 			}
 			score += 1;
-			draw();
 		}
+		draw();
 	}
 	void Brick::hit()
 	{
